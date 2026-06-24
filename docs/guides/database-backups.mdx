@@ -1,0 +1,87 @@
+---
+title: Database backups
+description: Schedule PostgreSQL backups, keep short retention, and verify restores for the Ignition API.
+---
+
+Ignition API stores product data in PostgreSQL through Prisma, so backup handling should be outside the request path and should not depend on the Nest process staying alive.
+
+## What is included
+
+- A scheduled GitHub Actions workflow that runs every day at 02:00 UTC.
+- A `pg_dump` custom-format backup for the database in `DATABASE_URL`.
+- A readable-manifest check with `pg_restore --list`.
+- A restore check into a temporary PostgreSQL service database.
+- Local retention cleanup for generated backup files.
+- GitHub artifact retention for archived backup files.
+
+## Required secret
+
+Add this repository secret before enabling the scheduled workflow:
+
+```text
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public
+```
+
+Do not commit the production database URL to the repository.
+
+## Manual backup
+
+From the API folder:
+
+```bash
+cd ignition-api
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public" npm run backup:database
+```
+
+By default, backups are written to `ignition-api/backups/database`.
+
+Optional settings:
+
+```bash
+DATABASE_BACKUP_DIR="./backups/database"
+DATABASE_BACKUP_RETENTION_DAYS=14
+DATABASE_BACKUP_ARCHIVE_DIR="/mnt/archive/ignition-pay"
+```
+
+`DATABASE_BACKUP_ARCHIVE_DIR` is useful when the API host has a mounted backup volume or another archival target.
+
+## Verify a backup
+
+Use this before attempting a restore:
+
+```bash
+cd ignition-api
+BACKUP_FILE="./backups/database/ignition-pay-2026-06-24T02-00-00-000Z.dump" npm run backup:verify
+```
+
+This checks that PostgreSQL can read the backup manifest.
+
+## Restore into a check database
+
+Always restore into a staging or disposable database first:
+
+```bash
+cd ignition-api
+BACKUP_FILE="./backups/database/ignition-pay-2026-06-24T02-00-00-000Z.dump" \
+RESTORE_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ignition_restore_check?schema=public" \
+npm run backup:restore
+```
+
+The scheduled workflow performs this restore check automatically against a temporary PostgreSQL service.
+
+## Retention policy
+
+- Local files older than `DATABASE_BACKUP_RETENTION_DAYS` are removed by the backup script.
+- GitHub Actions artifacts are retained for 14 days by default.
+- Production teams can copy every new dump to `DATABASE_BACKUP_ARCHIVE_DIR` for longer storage.
+
+Keep the retention window short enough to reduce sensitive data exposure, but long enough to recover from a delayed incident.
+
+## Recovery checklist
+
+1. Pick the newest backup before the incident time.
+2. Run `npm run backup:verify` against the dump.
+3. Restore into a staging database with `npm run backup:restore`.
+4. Point a staging API instance at the restored database.
+5. Smoke test login, campaign listing, wallet lookup, and donation history.
+6. Only then restore or promote data for production recovery.

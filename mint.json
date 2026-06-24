@@ -53,6 +53,7 @@
         "docs/guides/go-spec-validator",
         "docs/guides/ts-pooled-accounts",
         "docs/guides/ts-reconciling-deposits",
+        "docs/guides/database-backups",
         "docs/guides/flutter-deposit-addresses",
         "docs/guides/flutter-incoming-payments",
         "docs/guides/flutter-web-bigint"
