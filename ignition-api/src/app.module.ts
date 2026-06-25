@@ -13,6 +13,8 @@ import { CampaignsModule } from './campaigns/campaigns.module';
 import { UsersModule } from './users/users.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { SessionModule } from './session/session.module';
+import { AddressesModule } from './addresses/addresses.module';
 
 @Module({
   imports: [
@@ -23,6 +25,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     QueueModule,
     RedisModule,
     HealthModule,
+    SessionModule,
     AuthModule,
     AppThrottlerModule,
     ApiKeysModule,
@@ -30,6 +33,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     UsersModule,
     WalletsModule,
     TransactionsModule,
+    AddressesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

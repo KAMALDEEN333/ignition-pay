@@ -10,6 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -39,6 +40,7 @@ interface AuthenticatedRequest {
   };
 }
 
+@ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -48,6 +50,9 @@ export class UsersController {
    * Register with email + password + walletAddress.
    */
   @Post('register')
+  @Throttle({ strict: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, description: 'User registered successfully' })
   async register(@Body() dto: RegisterDto): Promise<RegisterResponseDto> {
     return this.usersService.register(
       dto.email,
@@ -72,7 +77,10 @@ export class UsersController {
    * Authenticate with email + password, returns access and refresh tokens.
    */
   @Post('login')
-  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Throttle({ strict: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Login user' })
+  @ApiResponse({ status: 201, description: 'User logged in successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
     return this.usersService.login(dto.email, dto.password);
   }
@@ -171,6 +179,8 @@ export class UsersController {
   }
 }
 
+@ApiTags('admin/users')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin/users')
 export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}

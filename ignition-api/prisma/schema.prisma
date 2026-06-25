@@ -91,31 +91,39 @@ enum KYCStatus {
   REJECTED
 }
 
+enum AddressStatus {
+  AVAILABLE
+  ALLOCATED
+  RETIRED
+}
+
 // ---------------------------------------------------------------------------
 // MODELS: Define all database models with relationships and constraints
 // ---------------------------------------------------------------------------
 
 /// User model representing donors, creators, and administrators
 model User {
-  id            String    @id @default(uuid())
-  walletAddress String    @unique
-  email         String?   @unique
-  displayName   String?
-  name          String?
-  phone         String?
-  preferences   Json?
-  role          UserRole  @default(USER)
-  kycStatus     KycStatus @default(UNVERIFIED)
-  bio           String?
-  avatarUrl     String?
-  socialLinks   Json?
-  verifiedStatus Boolean  @default(false)
-  passwordHash  String?
-  loginAttempts Int       @default(0)
-  lockedUntil   DateTime?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String    @id @default(uuid())
+  walletAddress    String?   @unique
+  email            String?   @unique
+  passwordHash     String?
+  displayName      String?
+  name             String?
+  phone            String?
+  bio              String?
+  avatarUrl        String?
+  preferences      Json?
+  socialLinks      Json?
+  role             UserRole  @default(USER)
+  kycStatus        KycStatus @default(UNVERIFIED)
+  emailVerifiedAt  DateTime?
+  verifiedStatus   Boolean   @default(false)
+  loginAttempts    Int       @default(0)
+  lockedUntil      DateTime?
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
 
   // Relations
   campaigns     Campaign[]     @relation("CampaignCreator")
@@ -134,6 +142,7 @@ model User {
   @@index([role])
   @@index([isActive])
   @@index([kycStatus])
+  @@index([deletedAt])
   @@map("users")
 }
 
@@ -385,10 +394,32 @@ model Wallet {
   updatedAt       DateTime      @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  depositAddresses DepositAddress[]
 
   @@index([userId])
   @@index([depositAddress])
   @@index([network])
   @@map("wallets")
+}
+
+/// DepositAddress model for tracking generated deposit addresses associated with wallets
+model DepositAddress {
+  id          String        @id @default(uuid())
+  address     String        @unique
+  walletId    String
+  network     WalletNetwork @default(STELLAR)
+  status      AddressStatus @default(ALLOCATED)
+  label       String?
+  allocatedAt DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([status])
+  @@index([network])
+  @@map("deposit_addresses")
 }

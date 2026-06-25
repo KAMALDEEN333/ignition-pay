@@ -14,6 +14,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginResponseDto } from './dto/login.dto';
 import { PasswordActionResponseDto } from './dto/password.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
+import { SessionService } from '../session/session.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserProfileDto, PublicUserProfileDto } from './dto/user-profile.dto';
 import { assertStrongPassword } from './password-policy';
@@ -54,12 +55,21 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly sessionService: SessionService,
   ) {}
 
   /**
    * Get authenticated user's full profile
    */
   async getMyProfile(walletAddress: string): Promise<UserProfileDto> {
+    const user = await this.prisma.user.findFirst({
+      where: { walletAddress, deletedAt: null },
+      include: {
+        campaigns: {
+          where: { status: 'ACTIVE' },
+        },
+        donations: true,
+      },
     const user = await this.prisma.user.findUnique({
       where: { walletAddress },
       include: userProfileInclude,
@@ -81,15 +91,18 @@ export class UsersService {
 
     return {
       id: user.id,
-      walletAddress: user.walletAddress || '',
+      email: user.email,
       displayName: user.displayName || undefined,
+      name: user.name || undefined,
+      phone: user.phone || undefined,
       bio: user.bio || undefined,
       avatarUrl: user.avatarUrl || undefined,
       role: user.role,
       kycStatus: user.kycStatus,
-      verifiedStatus: user.kycStatus === 'VERIFIED',
+      emailVerifiedAt: user.emailVerifiedAt || undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      deletedAt: user.deletedAt || undefined,
       totalRaised,
       totalDonated,
       campaignCount: user.campaigns.length,
@@ -103,8 +116,8 @@ export class UsersService {
     walletAddress: string,
     updateDto: UpdateUserDto,
   ): Promise<UserProfileDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { walletAddress },
+    const user = await this.prisma.user.findFirst({
+      where: { walletAddress, deletedAt: null },
     });
 
     if (!user) {
@@ -167,15 +180,18 @@ export class UsersService {
 
     return {
       id: updated.id,
-      walletAddress: updated.walletAddress || '',
+      email: updated.email,
       displayName: updated.displayName || undefined,
+      name: updated.name || undefined,
+      phone: updated.phone || undefined,
       bio: updated.bio || undefined,
       avatarUrl: updated.avatarUrl || undefined,
       role: updated.role,
       kycStatus: updated.kycStatus,
-      verifiedStatus: updated.kycStatus === 'VERIFIED',
+      emailVerifiedAt: updated.emailVerifiedAt || undefined,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
+      deletedAt: updated.deletedAt || undefined,
       totalRaised,
       totalDonated,
       campaignCount: updated.campaigns.length,
@@ -185,9 +201,11 @@ export class UsersService {
   /**
    * Get public profile for a user by wallet address
    */
-  async getPublicProfile(walletAddress: string): Promise<PublicUserProfileDto> {
-    const user = await this.prisma.user.findUnique({
-      where: { walletAddress },
+  async getPublicProfile(
+    walletAddress: string,
+  ): Promise<PublicUserProfileDto> {
+    const user = await this.prisma.user.findFirst({
+      where: { walletAddress, deletedAt: null },
       include: {
         campaigns: {
           where: { status: 'ACTIVE' },
@@ -224,8 +242,8 @@ export class UsersService {
     status: 'VERIFIED' | 'REJECTED' | 'PENDING',
     adminId: string,
   ): Promise<{ success: boolean; message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {
@@ -267,7 +285,9 @@ export class UsersService {
       900,
     );
 
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
+    });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -308,21 +328,39 @@ export class UsersService {
       data: { loginAttempts: 0, lockedUntil: null },
     });
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
-
-    const accessToken = this.jwt.sign(payload, {
-      secret: this.config.get<string>('JWT_SECRET', 'default-secret'),
-      expiresIn: '15m',
+    // Create a tracked session in Redis
+    const session = await this.sessionService.createSession({
+      userId: user.id,
+      walletAddress: user.walletAddress,
+      role: user.role,
     });
 
+    const accessTtlSeconds = this.config.get<number>('SESSION_ACCESS_TTL_SECONDS', 900);
+
+    const accessToken = this.jwt.sign(
+      {
+        sub: user.id,
+        walletAddress: user.walletAddress,
+        email: user.email,
+        role: user.role,
+        sid: session.sessionId,
+      },
+      {
+        secret: this.config.get<string>('JWT_SECRET', 'default-secret'),
+        expiresIn: `${accessTtlSeconds}s`,
+      },
+    );
+
+    const sessionTtlSeconds = this.config.get<number>('SESSION_TTL_SECONDS', 604800);
+
     const refreshToken = this.jwt.sign(
-      { sub: user.id },
+      { sub: user.id, sid: session.sessionId },
       {
         secret: this.config.get<string>(
           'REFRESH_TOKEN_SECRET',
           'default-refresh-secret',
         ),
-        expiresIn: '7d',
+        expiresIn: `${sessionTtlSeconds}s`,
       },
     );
 
@@ -421,6 +459,7 @@ export class UsersService {
       throw new BadRequestException('Email already in use');
     }
 
+    const passwordHash = await bcrypt.hash(password, 10);
     const existingWallet = await this.prisma.user.findUnique({
       where: { walletAddress },
     });
@@ -441,7 +480,6 @@ export class UsersService {
         email,
         passwordHash,
         role: 'USER',
-        verifiedStatus: false,
       },
     });
 
@@ -508,7 +546,7 @@ export class UsersService {
       }),
       this.prisma.user.update({
         where: { id: verification.userId },
-        data: { verifiedStatus: true },
+        data: { emailVerifiedAt: new Date() },
       }),
     ]);
 
@@ -518,16 +556,15 @@ export class UsersService {
   /**
    * Get or create user by wallet address
    */
-  async getOrCreateUser(walletAddress: string, email?: string) {
-    let user = await this.prisma.user.findUnique({
-      where: { walletAddress },
+  async getOrCreateUser(email: string) {
+    let user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
     });
 
     if (!user) {
       user = await this.prisma.user.create({
         data: {
-          walletAddress,
-          email: email || `${walletAddress}@stellaraid.local`,
+          email,
           role: 'DONOR',
         },
       });
@@ -538,7 +575,7 @@ export class UsersService {
           action: 'USER_CREATED',
           resourceType: 'User',
           resourceId: user.id,
-          details: JSON.stringify({ walletAddress }),
+          details: JSON.stringify({ email }),
         },
       });
     }
@@ -554,8 +591,8 @@ export class UsersService {
     role: UserRole,
     adminId: string,
   ): Promise<{ success: boolean; message: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {
