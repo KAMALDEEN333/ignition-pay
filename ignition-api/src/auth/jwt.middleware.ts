@@ -17,24 +17,25 @@ export class JwtMiddleware implements NestMiddleware {
   use(req: Request & { user?: unknown }, _res: Response, next: NextFunction) {
     const authHeader = req.headers['authorization'];
 
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+    if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
 
     const token = authHeader.slice(7);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const payload = this.jwt.verify(token, {
         secret: this.config.get<string>(
           'JWT_SECRET',
           'stellaraid-default-secret',
         ),
-      });
+      }) as Record<string, unknown>;
       req.user = payload;
       next();
-    } catch (error: any) {
-      if (error?.name === 'TokenExpiredError') {
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new UnauthorizedException('Token has expired');
       }
       throw new UnauthorizedException('Invalid token');
