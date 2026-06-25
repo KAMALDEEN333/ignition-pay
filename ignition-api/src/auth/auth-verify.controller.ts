@@ -10,17 +10,26 @@ import { Throttle } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Keypair, StrKey } from '@stellar/stellar-sdk';
+import { ApiProperty, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
 
-interface VerifyDto {
+export class VerifyDto {
+  @ApiProperty({ example: 'G...wallet-address' })
   walletAddress: string;
+
+  @ApiProperty({ example: 'signature-string' })
   signedChallenge: string;
+
+  @ApiProperty({ example: 'stellaraid:login:nonce:timestamp' })
   challenge: string;
 }
 
-interface AuthResponse {
+export class AuthResponse {
+  @ApiProperty({ example: 'eyJhbGci...' })
   accessToken: string;
+
+  @ApiProperty({ example: 'Bearer', enum: ['Bearer', 'bearer'] })
   tokenType: 'Bearer' | 'bearer';
 }
 
@@ -30,8 +39,9 @@ interface AuthResponse {
  * Verifies the Ed25519 signature, upserts the user on first login (#225),
  * applies the admin-wallet allowlist (#222), and returns a signed JWT.
  */
+@ApiTags('auth')
 @Controller('auth')
-@Throttle({ default: { limit: 10, ttl: 60_000 } })
+@Throttle({ strict: { limit: 5, ttl: 60_000 } })
 export class AuthVerifyController {
   constructor(
     private readonly jwt: JwtService,
@@ -40,6 +50,10 @@ export class AuthVerifyController {
   ) {}
 
   @Post('verify')
+  @ApiOperation({ summary: 'Verify signature and issue JWT token' })
+  @ApiResponse({ status: 201, description: 'Successful login', type: AuthResponse })
+  @ApiResponse({ status: 400, description: 'Invalid payload' })
+  @ApiResponse({ status: 401, description: 'Signature verification failed' })
   async verify(@Body() dto: VerifyDto): Promise<AuthResponse> {
     const { walletAddress, signedChallenge, challenge } = dto;
 

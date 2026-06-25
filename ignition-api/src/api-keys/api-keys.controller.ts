@@ -13,6 +13,7 @@ import { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
 interface JwtUser {
   sub: string;
@@ -20,12 +21,16 @@ interface JwtUser {
   role: string;
 }
 
+@ApiTags('api-keys')
+@ApiBearerAuth('JWT-auth')
 @Controller('api-keys')
 @UseGuards(JwtAuthGuard)
 export class ApiKeysController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new API key' })
+  @ApiResponse({ status: 201, description: 'API key successfully created' })
   async create(@Req() req: Request & { user: JwtUser }) {
     const rawKey = `sk_${randomBytes(32).toString('hex')}`;
     const prefix = rawKey.slice(0, 12);
@@ -53,6 +58,10 @@ export class ApiKeysController {
 
   @Delete(':id')
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Revoke an API key' })
+  @ApiResponse({ status: 200, description: 'API key successfully revoked' })
+  @ApiResponse({ status: 404, description: 'API key not found' })
+  @ApiResponse({ status: 403, description: 'Not authorized to revoke this key' })
   async revoke(
     @Param('id') id: string,
     @Req() req: Request & { user: JwtUser },

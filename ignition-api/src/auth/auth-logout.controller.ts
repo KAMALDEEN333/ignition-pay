@@ -15,10 +15,12 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import Keyv from 'keyv';
 
 @ApiTags('auth')
 @Controller('auth')
+@Throttle({ strict: { limit: 5, ttl: 60_000 } })
 export class AuthLogoutController {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Keyv) {}
 

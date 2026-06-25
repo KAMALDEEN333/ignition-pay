@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { CampaignsService } from './campaigns.service';
 import { UpdateCampaignDto } from './dto/update-campaign.dto';
@@ -25,6 +26,7 @@ const FORBIDDEN_FIELDS = [
   'endDate',
 ];
 
+@ApiTags('campaigns')
 @Controller('campaigns')
 export class CampaignsController {
   constructor(
@@ -33,6 +35,9 @@ export class CampaignsController {
   ) {}
 
   @Post()
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create a new campaign' })
+  @ApiResponse({ status: 201, description: 'Campaign successfully created' })
   async create(
     @Body() body: CreateCampaignDto,
     @Req() req: Request & { user: any },
@@ -42,6 +47,10 @@ export class CampaignsController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update an existing campaign' })
+  @ApiResponse({ status: 200, description: 'Campaign successfully updated' })
+  @ApiResponse({ status: 400, description: 'Cannot update protected fields' })
   async update(
     @Param('id') id: string,
     @Body() body: UpdateCampaignDto,
@@ -66,6 +75,8 @@ export class CampaignsController {
    * Cached for 30 seconds
    */
   @Get()
+  @ApiOperation({ summary: 'Browse public campaigns with filtering and sorting' })
+  @ApiResponse({ status: 200, description: 'List of campaigns matching criteria' })
   async browseCampaigns(
     @Query() query: BrowseCampaignsQueryDto,
   ): Promise<BrowseCampaignsResponseDto> {

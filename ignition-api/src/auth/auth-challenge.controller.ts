@@ -10,7 +10,7 @@ interface ChallengeResponse {
 
 @ApiTags('auth')
 @Controller('auth')
-@Throttle({ default: { limit: 10, ttl: 60_000 } })
+@Throttle({ strict: { limit: 5, ttl: 60_000 } })
 export class AuthChallengeController {
   @Get('challenge')
   @ApiOperation({ summary: 'Get authentication challenge for wallet address' })
