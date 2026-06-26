@@ -106,6 +106,17 @@ enum AddressStatus {
   RETIRED
 }
 
+enum WalletType {
+  CUSTODIAL
+  NON_CUSTODIAL
+}
+
+enum WalletStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
 // ---------------------------------------------------------------------------
 // MODELS: Define all database models with relationships and constraints
 // ---------------------------------------------------------------------------
@@ -396,6 +407,10 @@ model Wallet {
   network         WalletNetwork @default(STELLAR)
   depositAddress  String        @unique
   label           String?
+  balance         Decimal       @default(0) @db.Decimal(20, 7)
+  currency        String        @default("USD")
+  walletType      WalletType    @default(CUSTODIAL)
+  status          WalletStatus  @default(ACTIVE)
   dailyLimit      Decimal       @default(1000) @db.Decimal(20, 7)
   monthlyLimit    Decimal       @default(10000) @db.Decimal(20, 7)
   isActive        Boolean       @default(true)
@@ -403,7 +418,7 @@ model Wallet {
   updatedAt       DateTime      @updatedAt
 
   // Relations
-  addresses Address[]
+  addresses        Address[]
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   depositAddresses DepositAddress[]
   outgoingTransactions  Transaction[] @relation("OutgoingTransactions")
@@ -412,6 +427,7 @@ model Wallet {
   @@index([userId])
   @@index([depositAddress])
   @@index([network])
+  @@index([status])
   @@map("wallets")
 }
 
@@ -474,6 +490,8 @@ model Address {
   @@index([allocatedAt])
   @@index([lastActivityAt])
   @@map("addresses")
+}
+
 /// DepositAddress model for tracking generated deposit addresses associated with wallets
 model DepositAddress {
   id          String        @id @default(uuid())
