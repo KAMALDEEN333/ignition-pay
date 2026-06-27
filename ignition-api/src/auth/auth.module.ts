@@ -10,6 +10,7 @@ import { AuthVerifyController } from './auth-verify.controller';
 import { AuthLogoutController } from './auth-logout.controller';
 import { AuthRefreshController } from './auth-refresh.controller';
 import { AuthTokenService } from './auth-token.service';
+import { AuthChallengeService } from './auth-challenge.service';
 import { JwtMiddleware } from './jwt.middleware';
 import { JwtStrategy } from './jwt.strategy';
 
@@ -34,7 +35,7 @@ import { JwtStrategy } from './jwt.strategy';
     AuthLogoutController,
     AuthRefreshController,
   ],
-  providers: [AuthTokenService, JwtMiddleware, JwtStrategy],
+  providers: [AuthTokenService, JwtMiddleware, JwtStrategy,AuthChallengeService, JwtMiddleware],
   exports: [JwtModule, AuthTokenService, JwtMiddleware, JwtStrategy, PassportModule],
 })
 export class AuthModule {}

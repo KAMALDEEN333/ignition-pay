@@ -9,9 +9,15 @@ import { Throttle } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Keypair, StrKey } from '@stellar/stellar-sdk';
-import { ApiProperty, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { AuthChallengeService } from './auth-challenge.service';
 
 export class VerifyDto {
   @ApiProperty({ example: 'G...wallet-address' })
@@ -46,11 +52,16 @@ export class AuthVerifyController {
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly challengeService: AuthChallengeService,
   ) {}
 
   @Post('verify')
   @ApiOperation({ summary: 'Verify signature and issue JWT token' })
-  @ApiResponse({ status: 201, description: 'Successful login', type: AuthResponse })
+  @ApiResponse({
+    status: 201,
+    description: 'Successful login',
+    type: AuthResponse,
+  })
   @ApiResponse({ status: 400, description: 'Invalid payload' })
   @ApiResponse({ status: 401, description: 'Signature verification failed' })
   async verify(@Body() dto: VerifyDto): Promise<AuthResponse> {
@@ -71,6 +82,8 @@ export class AuthVerifyController {
     if (!valid) {
       throw new UnauthorizedException('Signature verification failed');
     }
+
+    await this.challengeService.consumeChallenge(walletAddress, challenge);
 
     // Issue #222: resolve role from admin allowlist
     const adminWallets = this.config
