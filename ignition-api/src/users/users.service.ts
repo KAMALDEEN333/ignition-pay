@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -68,14 +69,6 @@ export class UsersService {
   async getMyProfile(walletAddress: string): Promise<UserProfileDto> {
     const user = await this.prisma.user.findFirst({
       where: { walletAddress, deletedAt: null },
-      include: {
-        campaigns: {
-          where: { status: 'ACTIVE' },
-        },
-        donations: true,
-      },
-    const user = await this.prisma.user.findUnique({
-      where: { walletAddress },
       include: userProfileInclude,
     });
 
@@ -168,25 +161,6 @@ export class UsersService {
 
     const updated = await this.prisma.user.update({
       where: { id: user.id },
-      data: {
-        email: updateDto.email ?? user.email,
-        name: updateDto.name ?? user.name,
-        phone: updateDto.phone ?? user.phone,
-        preferences: parsedPreferences as Prisma.InputJsonValue,
-        displayName: updateDto.displayName ?? user.displayName,
-        bio: updateDto.bio ?? user.bio,
-        avatarUrl: updateDto.avatarUrl ?? user.avatarUrl,
-        socialLinks: (updateDto.socialLinks ?? user.socialLinks) as any,
-      },
-      include: {
-        campaigns: {
-          where: { status: 'ACTIVE' },
-        },
-        donations: true,
-      },
-    }) as Prisma.UserGetPayload<{
-      include: { campaigns: true; donations: true };
-    }>;
       data: updateData,
       include: userProfileInclude,
     });
@@ -265,6 +239,8 @@ export class UsersService {
     status: 'VERIFIED' | 'REJECTED' | 'PENDING',
     adminId: string,
   ): Promise<{ success: boolean; message: string }> {
+    await this.verifyAdminRole(adminId);
+
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
     });
@@ -486,7 +462,6 @@ export class UsersService {
       throw new BadRequestException('Email already in use');
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
     const existingWallet = await this.prisma.user.findUnique({
       where: { walletAddress },
     });
@@ -618,6 +593,8 @@ export class UsersService {
     role: UserRole,
     adminId: string,
   ): Promise<{ success: boolean; message: string }> {
+    await this.verifyAdminRole(adminId);
+
     const user = await this.prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
     });
@@ -745,5 +722,30 @@ export class UsersService {
     return Number.isInteger(parsedRounds) && parsedRounds > 0
       ? parsedRounds
       : 12;
+  }
+
+  /**
+   * Verify that the user has ADMIN role
+   * @param adminId - User ID or wallet address to verify
+   * @throws ForbiddenException if user is not an admin
+   */
+  private async verifyAdminRole(adminId: string): Promise<void> {
+    const admin = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { id: adminId },
+          { walletAddress: adminId },
+        ],
+        deletedAt: null,
+      },
+    });
+
+    if (!admin) {
+      throw new ForbiddenException('User not found');
+    }
+
+    if (admin.role !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
   }
 }
