@@ -8,6 +8,9 @@ describe('ApiKeysController', () => {
     apiKey: {
       create: jest.Mock;
       updateMany: jest.Mock;
+      findMany: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
     };
   };
 
@@ -16,6 +19,9 @@ describe('ApiKeysController', () => {
       apiKey: {
         create: jest.fn(),
         updateMany: jest.fn(),
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
       },
     };
 
@@ -91,6 +97,154 @@ describe('ApiKeysController', () => {
         user: {
           sub: 'user-2',
           walletAddress: 'GDEF',
+          role: 'USER',
+        },
+      } as never),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('lists all API keys for the authenticated user', async () => {
+    prisma.apiKey.findMany.mockResolvedValue([
+      {
+        id: 'api-key-1',
+        name: 'Production Key',
+        prefix: 'sk_12345678',
+        scope: 'read',
+        isActive: true,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+
+    const result = await controller.list({
+      user: {
+        sub: 'user-1',
+        walletAddress: 'GABC',
+        role: 'USER',
+      },
+    } as never);
+
+    expect(prisma.apiKey.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'user-1' },
+      }),
+    );
+    expect(result).toEqual({
+      apiKeys: [
+        expect.objectContaining({
+          id: 'api-key-1',
+          name: 'Production Key',
+        }),
+      ],
+    });
+  });
+
+  it('updates API key metadata', async () => {
+    prisma.apiKey.findFirst.mockResolvedValue({
+      id: 'api-key-1',
+      name: 'Old Name',
+      prefix: 'sk_12345678',
+      scope: 'read',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    prisma.apiKey.update.mockResolvedValue({
+      id: 'api-key-1',
+      name: 'New Name',
+      prefix: 'sk_12345678',
+      scope: 'read',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    const result = await controller.update('api-key-1', { name: 'New Name' }, {
+      user: {
+        sub: 'user-1',
+        walletAddress: 'GABC',
+        role: 'USER',
+      },
+    } as never);
+
+    expect(prisma.apiKey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'api-key-1' },
+        data: { name: 'New Name' },
+      }),
+    );
+    expect(result.name).toBe('New Name');
+  });
+
+  it('returns not found when updating a non-existent key', async () => {
+    prisma.apiKey.findFirst.mockResolvedValue(null);
+
+    await expect(
+      controller.update('api-key-1', { name: 'New Name' }, {
+        user: {
+          sub: 'user-1',
+          walletAddress: 'GABC',
+          role: 'USER',
+        },
+      } as never),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it('rotates an API key by creating new and revoking old', async () => {
+    prisma.apiKey.findFirst.mockResolvedValue({
+      id: 'api-key-1',
+      name: 'Production Key',
+      prefix: 'sk_12345678',
+      scope: 'read',
+      isActive: true,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    prisma.apiKey.create.mockResolvedValue({
+      id: 'api-key-2',
+      name: 'Production Key',
+      prefix: 'sk_87654321',
+      scope: 'read',
+      isActive: true,
+      createdAt: new Date('2026-01-02T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+    });
+
+    prisma.apiKey.update.mockResolvedValue({});
+
+    const result = await controller.rotate('api-key-1', {
+      user: {
+        sub: 'user-1',
+        walletAddress: 'GABC',
+        role: 'USER',
+      },
+    } as never);
+
+    expect(prisma.apiKey.create).toHaveBeenCalled();
+    expect(prisma.apiKey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'api-key-1' },
+        data: { isActive: false },
+      }),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        id: 'api-key-2',
+        key: expect.stringMatching(/^sk_/),
+      }),
+    );
+  });
+
+  it('returns not found when rotating a non-existent key', async () => {
+    prisma.apiKey.findFirst.mockResolvedValue(null);
+
+    await expect(
+      controller.rotate('api-key-1', {
+        user: {
+          sub: 'user-1',
+          walletAddress: 'GABC',
           role: 'USER',
         },
       } as never),
