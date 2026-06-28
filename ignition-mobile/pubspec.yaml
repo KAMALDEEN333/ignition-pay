@@ -12,6 +12,12 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   flutter_dotenv: ^5.1.0
+  dio: ^5.7.0
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  google_fonts: ^6.2.1
+  firebase_core: ^3.13.1
+  firebase_analytics: ^11.4.5
   stellar_address_kit:
     path: ../packages/core-dart
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'core/design_system/design_system.dart';
 import 'features/home/pages/home_page.dart';
 
 class IgnitionPayApp extends StatelessWidget {
@@ -9,16 +10,8 @@ class IgnitionPayApp extends StatelessWidget {
     return MaterialApp(
       title: 'Ignition Pay',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF6C63FF),
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF6C63FF),
-        useMaterial3: true,
-        brightness: Brightness.dark,
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       home: const HomePage(),
     );
