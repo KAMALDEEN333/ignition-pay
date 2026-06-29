@@ -149,7 +149,7 @@ export class AuthTokenService {
     let user;
     try {
       user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
+        where: { id: payload.sub, isActive: true, deletedAt: null },
       });
     } catch {
       throw new ServiceUnavailableException('Service temporarily unavailable');
@@ -157,10 +157,6 @@ export class AuthTokenService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is inactive');
     }
 
     const cacheKey = this.refreshCacheKey(user.walletAddress ?? '');
