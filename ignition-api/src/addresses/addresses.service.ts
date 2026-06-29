@@ -8,9 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressResponseDto } from './dto/address-response.dto';
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import StellarSdk from '@stellar/stellar-sdk';
-import { PrismaService } from '../prisma/prisma.service';
 import { GenerateAddressDto } from './dto/generate-address.dto';
 import { WalletNetwork } from '../wallets/dto/create-wallet.dto';
 
@@ -148,6 +146,8 @@ export class AddressesService {
       createdAt: address.createdAt,
       updatedAt: address.updatedAt,
     };
+  }
+
   async generate(userId: string, dto: GenerateAddressDto) {
     const { walletId, network = WalletNetwork.STELLAR, label } = dto;
 

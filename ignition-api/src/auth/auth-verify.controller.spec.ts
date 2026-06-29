@@ -9,13 +9,14 @@ import { VerifyDto } from './auth-verify.controller';
 // We need a real Keypair to test the signature verification path.
 import { Keypair } from '@stellar/stellar-sdk';
 
-const TEST_WALLET_SECRET =
-  'SDR4C2CKNCVK4DWMTNI2IXFJ6BE3A6J3WVNCGR6Q3SCMJD5V4V6VAAAAA';
-const TEST_WALLET_PUBLIC = Keypair.fromSecret(TEST_WALLET_SECRET).publicKey();
+const TEST_KEYPAIR = Keypair.random();
+const TEST_WALLET_SECRET = TEST_KEYPAIR.secret();
+const TEST_WALLET_PUBLIC = TEST_KEYPAIR.publicKey();
 
 interface PartialVerifyDeps {
   prisma?: jest.Mocked<Pick<PrismaService, 'user'>>;
   config?: ConfigService;
+  challengeService?: jest.Mocked<Pick<AuthChallengeService, 'consumeChallenge'>>;
   sessionService?: jest.Mocked<Pick<SessionService, 'createSession'>>;
   tokenService?: jest.Mocked<Pick<AuthTokenService, 'issueTokenPair'>>;
 }
@@ -23,6 +24,7 @@ interface PartialVerifyDeps {
 function makeController(overrides: PartialVerifyDeps = {}): {
   controller: AuthVerifyController;
   prisma: any;
+  challengeService: any;
   sessionService: any;
   tokenService: any;
 } {
@@ -40,6 +42,9 @@ function makeController(overrides: PartialVerifyDeps = {}): {
     JWT_SECRET: 'test-secret',
     REFRESH_TOKEN_SECRET: 'test-refresh-secret',
   });
+  const challengeService = {
+    consumeChallenge: jest.fn().mockResolvedValue(undefined),
+  };
   const sessionService = {
     createSession: jest.fn().mockResolvedValue({
       sessionId: 'sess-1',
@@ -62,11 +67,12 @@ function makeController(overrides: PartialVerifyDeps = {}): {
   const controller = new AuthVerifyController(
     (overrides.prisma ?? prisma) as unknown as PrismaService,
     overrides.config ?? config,
+    (overrides.challengeService ?? challengeService) as unknown as AuthChallengeService,
     (overrides.sessionService ?? sessionService) as unknown as SessionService,
     (overrides.tokenService ?? tokenService) as unknown as AuthTokenService,
   );
 
-  return { controller, prisma, sessionService, tokenService };
+  return { controller, prisma, challengeService, sessionService, tokenService };
 }
 
 function signChallenge(challenge: string): string {

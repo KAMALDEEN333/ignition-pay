@@ -44,6 +44,7 @@ describe('AuthChallengeService', () => {
     cache.delete.mockResolvedValue(true);
 
     const challenge = await service.issueChallenge(walletAddress);
+    cache.get.mockResolvedValue(challenge);
 
     expect(challenge).toContain('stellaraid:login:');
     expect(cache.set).toHaveBeenCalledWith(

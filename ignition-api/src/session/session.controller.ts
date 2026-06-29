@@ -17,10 +17,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import {
-  AuthenticatedRequest,
-  SessionGuard,
-} from './session.guard';
+import { SessionGuard } from './session.guard';
+import type { AuthenticatedRequest } from './session.guard';
 import { SessionMetadata, SessionService } from './session.service';
 
 class SessionInfoDto {

@@ -62,6 +62,33 @@ describe('Queue processors integration', () => {
       getQueueToken(QUEUE_CONTRACT_EVENTS),
     );
     analyticsQueue = moduleRef.get<Queue>(getQueueToken(QUEUE_ANALYTICS));
+
+    // Mock queue operations to avoid requiring a running Redis instance
+    emailQueue.add = jest.fn().mockImplementation(async (name, data) => {
+      const processor = moduleRef.get(EmailProcessor);
+      if (name === EMAIL_JOB_SEND_VERIFICATION) {
+        await processor.handleVerification({ data } as any);
+      } else {
+        await processor.handleNotification({ data } as any);
+      }
+      return { finished: jest.fn().mockResolvedValue(undefined) };
+    });
+
+    contractEventsQueue.add = jest.fn().mockImplementation(async (name, data) => {
+      const processor = moduleRef.get(ContractEventsProcessor);
+      await processor.handleEvent({ data } as any);
+      return { finished: jest.fn().mockResolvedValue(undefined) };
+    });
+
+    analyticsQueue.add = jest.fn().mockImplementation(async (name, data) => {
+      const processor = moduleRef.get(AnalyticsProcessor);
+      await processor.trackEvent({ data } as any);
+      return { finished: jest.fn().mockResolvedValue(undefined) };
+    });
+
+    emailQueue.close = jest.fn().mockResolvedValue(undefined);
+    contractEventsQueue.close = jest.fn().mockResolvedValue(undefined);
+    analyticsQueue.close = jest.fn().mockResolvedValue(undefined);
   }, 30000);
 
   afterAll(async () => {

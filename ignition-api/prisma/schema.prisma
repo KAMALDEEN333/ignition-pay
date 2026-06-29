@@ -7,6 +7,81 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UserRole {
+  USER
+  DONOR
+  CREATOR
+  ADMIN
+}
+
+enum KycStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum DonationStatus {
+  PENDING
+  CONFIRMED
+  REFUNDED
+  FAILED
+}
+
+enum MilestoneStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  FAILED
+}
+
+enum NotificationType {
+  CAMPAIGN_CREATED
+  CAMPAIGN_UPDATED
+  DONATION_RECEIVED
+  MILESTONE_REACHED
+  CAMPAIGN_COMPLETED
+  DISPUTE_FILED
+  DISPUTE_RESOLVED
+}
+
+enum DisputeStatus {
+  OPENED
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum AuditActionType {
+  USER_CREATED
+  CAMPAIGN_CREATED
+  CAMPAIGN_UPDATED
+  DONATION_MADE
+  MILESTONE_COMPLETED
+  DISPUTE_FILED
+  ADMIN_ACTION
+}
+
+enum KYCStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum WalletNetwork {
+  STELLAR
+  ETHEREUM
+  BITCOIN
+}
 
 enum TransactionStatus {
   PENDING

@@ -1,6 +1,6 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
-import { Job } from 'bull';
+import type { Job } from 'bull';
 import { QUEUE_EMAIL } from '../queue.constants';
 import {
   EMAIL_JOB_SEND_NOTIFICATION,

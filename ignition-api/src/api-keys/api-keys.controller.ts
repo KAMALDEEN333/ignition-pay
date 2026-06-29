@@ -10,6 +10,9 @@ import {
   Post,
   Req,
   UseGuards,
+  Get,
+  Patch,
+  Body,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,

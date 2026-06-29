@@ -5,6 +5,15 @@ import {
 } from '@nestjs/common';
 import { AddressesService } from './addresses.service';
 
+jest.mock('@stellar/stellar-sdk', () => ({
+  __esModule: true,
+  default: {
+    Keypair: {
+      random: jest.fn(() => ({ publicKey: () => 'GNEWADDRESS123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567' })),
+    },
+  },
+}));
+
 const mockAddress = {
   id: 'address-uuid',
   walletId: null,
@@ -17,28 +26,6 @@ const mockAddress = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-
-const mockWallet = {
-  id: 'wallet-uuid',
-  userId: 'user-uuid',
-  network: 'STELLAR',
-  depositAddress: 'GANOTHERADDRESS123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ12345',
-  label: null,
-  dailyLimit: 1000,
-  monthlyLimit: 10000,
-  isActive: true,
-import { NotFoundException, ConflictException } from '@nestjs/common';
-
-jest.mock('@stellar/stellar-sdk', () => ({
-  __esModule: true,
-  default: {
-    Keypair: {
-      random: jest.fn(() => ({ publicKey: () => 'GNEWADDRESS123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567' })),
-    },
-  },
-}));
-
-import { AddressesService } from './addresses.service';
 
 const mockWallet = {
   id: 'wallet-uuid',
@@ -60,7 +47,7 @@ const mockDepositAddress = {
   updatedAt: new Date(),
 };
 
-const buildMockPrisma = (overrides: Partial<{ address: any; addressNull: boolean; wallet: any }> = {}) => {
+const buildMockPrisma = (overrides: Partial<{ address: any; addressNull: boolean; wallet: any; depositAddress: any; created: any }> = {}) => {
   const mock = {
     address: {
       findUnique: jest.fn().mockImplementation(({ where }: any) => {
@@ -81,19 +68,20 @@ const buildMockPrisma = (overrides: Partial<{ address: any; addressNull: boolean
         return 'wallet' in overrides ? overrides.wallet : mockWallet;
       }),
     },
+    depositAddress: {
+      findUnique: jest.fn().mockImplementation(({ where }: any) => {
+        return 'depositAddress' in overrides ? overrides.depositAddress : null;
+      }),
+      create: jest.fn().mockImplementation(({ data }: any) => {
+        return 'created' in overrides ? overrides.created : { ...mockDepositAddress, ...data };
+      }),
+      findMany: jest.fn().mockImplementation(({ where }: any) => {
+        return [mockDepositAddress];
+      }),
+    },
   };
   return mock;
 };
-const buildMockPrisma = (overrides: Partial<{ wallet: any; depositAddress: any; created: any }> = {}) => ({
-  wallet: {
-    findUnique: jest.fn().mockResolvedValue('wallet' in overrides ? overrides.wallet : mockWallet),
-  },
-  depositAddress: {
-    findUnique: jest.fn().mockResolvedValue('depositAddress' in overrides ? overrides.depositAddress : null),
-    create: jest.fn().mockResolvedValue('created' in overrides ? overrides.created : mockDepositAddress),
-    findMany: jest.fn().mockResolvedValue([mockDepositAddress]),
-  },
-});
 
 describe('AddressesService', () => {
   let service: AddressesService;
@@ -262,6 +250,9 @@ describe('AddressesService', () => {
           data: { lastActivityAt: expect.any(Date) },
         }),
       );
+    });
+  });
+
   describe('generate', () => {
     it('generates and returns a new deposit address for a valid wallet', async () => {
       const result = await service.generate('user-uuid', { walletId: 'wallet-uuid' });

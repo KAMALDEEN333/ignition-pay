@@ -8,6 +8,7 @@ import {
   Body,
   UseGuards,
   ParseUUIDPipe,
+  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
@@ -15,11 +16,7 @@ import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { AddressResponseDto } from './dto/address-response.dto';
-import { Controller, Post, Get, Param, Body, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AddressesService } from './addresses.service';
 import { GenerateAddressDto } from './dto/generate-address.dto';
-import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 
 @ApiTags('addresses')
 @ApiBearerAuth()
@@ -75,6 +72,8 @@ export class AddressesController {
   @ApiResponse({ status: 404, description: 'Address not found' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.addressesService.remove(id);
+  }
+
   @Post('generate')
   @ApiOperation({ summary: 'Generate a new deposit address for a wallet' })
   @ApiResponse({ status: 201, description: 'Address generated and allocated' })
@@ -83,8 +82,8 @@ export class AddressesController {
     return this.addressesService.generate(req.user.sub, dto);
   }
 
-  @Get('wallet/:walletId')
-  @ApiOperation({ summary: 'List all deposit addresses for a wallet' })
+  @Get('wallet/:walletId/user')
+  @ApiOperation({ summary: 'List all deposit addresses for a wallet belonging to user' })
   @ApiResponse({ status: 200, description: 'List of deposit addresses' })
   async listByWallet(@Request() req: any, @Param('walletId') walletId: string) {
     return this.addressesService.listByWallet(req.user.sub, walletId);

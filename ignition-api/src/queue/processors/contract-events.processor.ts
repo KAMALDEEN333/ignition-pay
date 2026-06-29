@@ -1,6 +1,6 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
-import { Job } from 'bull';
+import type { Job } from 'bull';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QUEUE_CONTRACT_EVENTS } from '../queue.constants';
 import {
@@ -35,11 +35,7 @@ export class ContractEventsProcessor {
     );
 
     if (txHash) {
-      const updateData: {
-        status: 'COMPLETED';
-        statusUpdatedAt: Date;
-        metadata?: Record<string, unknown>;
-      } = {
+      const updateData: any = {
         status: 'COMPLETED',
         statusUpdatedAt: new Date(),
       };

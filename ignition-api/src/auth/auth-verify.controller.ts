@@ -85,6 +85,14 @@ export class AuthVerifyController {
   async verify(@Body() dto: VerifyDto): Promise<AuthResponse> {
     const { walletAddress, signedChallenge, challenge } = dto;
 
+    if (!walletAddress || !signedChallenge || !challenge) {
+      throw new BadRequestException('walletAddress, signedChallenge, and challenge are required');
+    }
+
+    if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
+      throw new BadRequestException('Invalid wallet address');
+    }
+
     const keypair = Keypair.fromPublicKey(walletAddress);
     const messageBytes = Buffer.from(challenge, 'utf8');
     const signatureBytes = Buffer.from(signedChallenge, 'base64');
@@ -136,7 +144,7 @@ export class AuthVerifyController {
     const roleValue = String(role);
     const session = await this.sessionService.createSession({
       userId: user.id,
-      walletAddress: user.walletAddress,
+      walletAddress: user.walletAddress ?? '',
       role: roleValue,
     });
 

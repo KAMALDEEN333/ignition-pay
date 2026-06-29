@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { initSentry } from './common/sentry/sentry.middleware';
+import { ValidationExceptionFilter } from './common/validation-exception.filter';
 
 async function bootstrap() {
   initSentry(process.env.SENTRY_DSN ?? '');

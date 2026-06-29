@@ -15,10 +15,8 @@ import {
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
-import {
-  AuthenticatedRequest,
-  SessionGuard,
-} from '../session/session.guard';
+import { SessionGuard } from '../session/session.guard';
+import type { AuthenticatedRequest } from '../session/session.guard';
 import { SessionService } from '../session/session.service';
 import { AuthTokenService } from './auth-token.service';
 

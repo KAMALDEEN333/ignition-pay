@@ -88,7 +88,7 @@ export class UsersService {
 
     return {
       id: user.id,
-      email: user.email,
+      email: user.email ?? undefined,
       displayName: user.displayName || undefined,
       name: user.name || undefined,
       phone: user.phone || undefined,
@@ -177,7 +177,7 @@ export class UsersService {
 
     return {
       id: updated.id,
-      email: updated.email,
+      email: updated.email ?? undefined,
       displayName: updated.displayName || undefined,
       name: updated.name || undefined,
       phone: updated.phone || undefined,
@@ -330,7 +330,7 @@ export class UsersService {
     // Create a tracked session in Redis
     const session = await this.sessionService.createSession({
       userId: user.id,
-      walletAddress: user.walletAddress,
+      walletAddress: user.walletAddress ?? '',
       role: user.role,
     });
 
