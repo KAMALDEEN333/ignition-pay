@@ -6,7 +6,13 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest --runInBand --forceExit"
+    "test": "jest --runInBand --forceExit",
+    "dev:infra": "docker compose up -d",
+    "dev:infra:stop": "docker compose stop",
+    "dev:infra:down": "docker compose down",
+    "dev:infra:logs": "docker compose logs -f",
+    "dev:infra:status": "docker compose ps",
+    "dev:infra:reset": "docker compose down -v"
   },
   "dependencies": {
     "@stellar/stellar-sdk": "^13.0.0"
