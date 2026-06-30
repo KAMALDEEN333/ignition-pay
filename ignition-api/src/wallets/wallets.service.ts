@@ -30,8 +30,8 @@ export class WalletsService {
    * Create a new wallet for a user, assigning a deposit address and configuring limits.
    */
   async createWallet(userId: string, dto: CreateWalletDto) {
-    // Verify user exists
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    // Verify user exists and is active
+    const user = await this.prisma.user.findUnique({ where: { id: userId, isActive: true, deletedAt: null } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
