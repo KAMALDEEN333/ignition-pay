@@ -25,7 +25,7 @@ export class ConfigValidationService implements OnModuleInit {
       if (!StrKey.isValidEd25519PublicKey(wallet)) {
         throw new Error(
           `Invalid Stellar public key in ADMIN_WALLETS: "${wallet}". ` +
-          `Please check your configuration.`,
+            `Please check your configuration.`,
         );
       }
     }

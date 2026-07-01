@@ -18,7 +18,7 @@ import { PermissionsGuard } from './permissions/permissions.guard';
 
 @Module({
   imports: [
-      ConfigModule,
+    ConfigModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -40,8 +40,23 @@ import { PermissionsGuard } from './permissions/permissions.guard';
     AuthLogoutController,
     AuthRefreshController,
   ],
-  providers: [AuthTokenService, JwtMiddleware, JwtStrategy, AuthChallengeService, JwtMiddleware, PermissionsService, PermissionsGuard],
-  exports: [JwtModule, AuthTokenService, JwtMiddleware, JwtStrategy, PassportModule, PermissionsService, PermissionsGuard],
+  providers: [
+    AuthTokenService,
+    JwtMiddleware,
+    JwtStrategy,
+    AuthChallengeService,
+    JwtMiddleware,
+    PermissionsService,
+    PermissionsGuard,
+  ],
+  exports: [
+    JwtModule,
+    AuthTokenService,
+    JwtMiddleware,
+    JwtStrategy,
+    PassportModule,
+    PermissionsService,
+    PermissionsGuard,
+  ],
 })
 export class AuthModule {}
-

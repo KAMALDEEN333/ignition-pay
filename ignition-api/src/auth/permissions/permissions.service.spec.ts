@@ -35,11 +35,15 @@ describe('PermissionsService', () => {
 
   describe('hasPermission', () => {
     it('returns true when role has permission', () => {
-      expect(service.hasPermission(UserRole.ADMIN, Permission.ADMIN_USERS_KYC)).toBe(true);
+      expect(
+        service.hasPermission(UserRole.ADMIN, Permission.ADMIN_USERS_KYC),
+      ).toBe(true);
     });
 
     it('returns false when role lacks permission', () => {
-      expect(service.hasPermission(UserRole.USER, Permission.ADMIN_USERS_KYC)).toBe(false);
+      expect(
+        service.hasPermission(UserRole.USER, Permission.ADMIN_USERS_KYC),
+      ).toBe(false);
     });
   });
 });

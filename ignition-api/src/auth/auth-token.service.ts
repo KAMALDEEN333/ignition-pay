@@ -129,7 +129,7 @@ export class AuthTokenService {
           'REFRESH_TOKEN_SECRET',
           'default-refresh-secret',
         ),
-      }) as RefreshTokenPayload;
+      });
     } catch (err: unknown) {
       if (
         err &&
@@ -179,17 +179,23 @@ export class AuthTokenService {
     };
 
     const accessToken = this.jwt.sign(accessPayload, {
-      secret: this.config.get<string>('JWT_SECRET', 'stellaraid-default-secret'),
+      secret: this.config.get<string>(
+        'JWT_SECRET',
+        'stellaraid-default-secret',
+      ),
       expiresIn: this.ACCESS_TTL,
     });
 
-    const newRefreshToken = this.jwt.sign({ sub: user.id }, {
-      secret: this.config.get<string>(
-        'REFRESH_TOKEN_SECRET',
-        'default-refresh-secret',
-      ),
-      expiresIn: '7d',
-    });
+    const newRefreshToken = this.jwt.sign(
+      { sub: user.id },
+      {
+        secret: this.config.get<string>(
+          'REFRESH_TOKEN_SECRET',
+          'default-refresh-secret',
+        ),
+        expiresIn: '7d',
+      },
+    );
 
     try {
       await this.cache.delete(cacheKey);
@@ -206,7 +212,9 @@ export class AuthTokenService {
    * (and any other revoking flow) so that even if the refresh token was
    * stolen, it can never be used again after this call returns.
    */
-  async revokeRefreshToken(walletAddress: string | null | undefined): Promise<void> {
+  async revokeRefreshToken(
+    walletAddress: string | null | undefined,
+  ): Promise<void> {
     if (!walletAddress) {
       return;
     }

@@ -86,7 +86,9 @@ export class AuthVerifyController {
     const { walletAddress, signedChallenge, challenge } = dto;
 
     if (!walletAddress || !signedChallenge || !challenge) {
-      throw new BadRequestException('walletAddress, signedChallenge, and challenge are required');
+      throw new BadRequestException(
+        'walletAddress, signedChallenge, and challenge are required',
+      );
     }
 
     if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
@@ -114,7 +116,9 @@ export class AuthVerifyController {
     // Validate all admin wallet addresses (extra layer, though already validated at startup)
     for (const wallet of adminWallets) {
       if (!StrKey.isValidEd25519PublicKey(wallet)) {
-        throw new Error(`Invalid Stellar public key in ADMIN_WALLETS: "${wallet}"`);
+        throw new Error(
+          `Invalid Stellar public key in ADMIN_WALLETS: "${wallet}"`,
+        );
       }
     }
 

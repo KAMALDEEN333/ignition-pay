@@ -31,7 +31,9 @@ export class WalletsService {
    */
   async createWallet(userId: string, dto: CreateWalletDto) {
     // Verify user exists and is active
-    const user = await this.prisma.user.findUnique({ where: { id: userId, isActive: true, deletedAt: null } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId, isActive: true, deletedAt: null },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -39,7 +41,8 @@ export class WalletsService {
     const network = dto.network ?? WalletNetwork.STELLAR;
 
     // Determine deposit address (auto-generate if not provided)
-    const depositAddress = dto.depositAddress ?? StellarSdk.Keypair.random().publicKey();
+    const depositAddress =
+      dto.depositAddress ?? StellarSdk.Keypair.random().publicKey();
 
     // Validate Stellar addresses
     if (

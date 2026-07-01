@@ -9,7 +9,7 @@ describe('AuthChallengeController', () => {
   beforeEach(async () => {
     service = {
       issueChallenge: jest.fn(),
-    } as any;
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthChallengeController],
@@ -25,7 +25,9 @@ describe('AuthChallengeController', () => {
 
   it('getChallenge() should return a challenge from the service', async () => {
     const query = { walletAddress: 'GBKXNRTZQVD6CNOQNRZVMJVQ4ZQ5KABCDEF' };
-    service.issueChallenge.mockResolvedValue('stellaraid:login:challenge-nonce');
+    service.issueChallenge.mockResolvedValue(
+      'stellaraid:login:challenge-nonce',
+    );
 
     const res = await controller.getChallenge(query);
 

@@ -10,9 +10,6 @@ import {
   Post,
   Req,
   UseGuards,
-  Get,
-  Patch,
-  Body,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -60,7 +57,9 @@ export class ApiKeysController {
     });
 
     if (existingActiveKey) {
-      throw new ConflictException('An active API key already exists for this prefix');
+      throw new ConflictException(
+        'An active API key already exists for this prefix',
+      );
     }
 
     const apiKey = await this.prisma.apiKey.create({
@@ -126,7 +125,10 @@ export class ApiKeysController {
   @UseGuards(JwtAuthGuard, AdminGuard, PermissionsGuard)
   @RequirePermissions(Permission.APIKEY_MANAGE_ANY)
   @ApiOperation({ summary: 'List API keys for a specific user (admin)' })
-  @ApiResponse({ status: 200, description: 'User API keys retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User API keys retrieved successfully',
+  })
   async listForUser(@Param('userId') userId: string) {
     const apiKeys = await this.prisma.apiKey.findMany({
       where: {

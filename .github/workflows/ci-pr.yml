@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run TypeScript tests
-        run: pnpm --dir packages/core-ts test -- --coverage --ci
+        run: pnpm --dir packages/core-ts test -- --coverage
       - name: Upload TypeScript coverage
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,4 +1,7 @@
-import { UnauthorizedException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthTokenService } from './auth-token.service';
@@ -85,7 +88,9 @@ describe('AuthTokenService', () => {
   describe('validateAndRotate', () => {
     // Feature: token-refresh-endpoint, Property 1: Empty and whitespace refresh tokens are always rejected
     it('rejects empty refresh token', async () => {
-      await expect(service.validateAndRotate('')).rejects.toThrow(UnauthorizedException);
+      await expect(service.validateAndRotate('')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     // Feature: token-refresh-endpoint, Property 2: Payloads without a valid sub claim are always rejected
@@ -132,18 +137,21 @@ describe('AuthTokenService', () => {
       jwt.verify.mockReturnValue({ sub: 'non-existent-user' });
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('returns 401 "Account is inactive" when user is not active', async () => {
       jwt.verify.mockReturnValue({ sub: testUser.id });
-      prisma.user.findUnique.mockResolvedValue({ ...testUser, isActive: false });
+      prisma.user.findUnique.mockResolvedValue({
+        ...testUser,
+        isActive: false,
+      });
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('returns 401 "Refresh token has been revoked" when no stored token', async () => {
@@ -151,9 +159,9 @@ describe('AuthTokenService', () => {
       prisma.user.findUnique.mockResolvedValue(testUser);
       cache.get.mockResolvedValue(undefined);
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     // Feature: token-refresh-endpoint, Property 3: Token mismatch always produces a revoked response
@@ -162,18 +170,18 @@ describe('AuthTokenService', () => {
       prisma.user.findUnique.mockResolvedValue(testUser);
       cache.get.mockResolvedValue('different-stored-token');
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('returns 503 when Prisma throws', async () => {
       jwt.verify.mockReturnValue({ sub: testUser.id });
       prisma.user.findUnique.mockRejectedValue(new Error('DB error'));
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        ServiceUnavailableException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
 
     it('returns 503 when cache.get throws', async () => {
@@ -181,9 +189,9 @@ describe('AuthTokenService', () => {
       prisma.user.findUnique.mockResolvedValue(testUser);
       cache.get.mockRejectedValue(new Error('Redis error'));
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        ServiceUnavailableException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
 
     // Feature: token-refresh-endpoint, Property 6: Token rotation replaces the stored token
@@ -223,7 +231,9 @@ describe('AuthTokenService', () => {
         }),
       );
 
-      expect(cache.delete).toHaveBeenCalledWith(`refresh:${testUser.walletAddress}`);
+      expect(cache.delete).toHaveBeenCalledWith(
+        `refresh:${testUser.walletAddress}`,
+      );
       expect(cache.set).toHaveBeenCalledWith(
         `refresh:${testUser.walletAddress}`,
         newRefreshToken,
@@ -250,9 +260,9 @@ describe('AuthTokenService', () => {
       cache.delete.mockResolvedValue(true);
       cache.set.mockRejectedValue(new Error('Redis write error'));
 
-      await expect(service.validateAndRotate(validRefreshToken)).rejects.toThrow(
-        ServiceUnavailableException,
-      );
+      await expect(
+        service.validateAndRotate(validRefreshToken),
+      ).rejects.toThrow(ServiceUnavailableException);
     });
 
     // Feature: token-refresh-endpoint, Property 10: Error responses never leak the refresh token
@@ -265,7 +275,9 @@ describe('AuthTokenService', () => {
         await service.validateAndRotate(validRefreshToken);
       } catch (error) {
         expect(error).toBeInstanceOf(UnauthorizedException);
-        expect((error as UnauthorizedException).message).toBe('Refresh token has been revoked');
+        expect((error as UnauthorizedException).message).toBe(
+          'Refresh token has been revoked',
+        );
         expect(JSON.stringify(error)).not.toContain(validRefreshToken);
       }
     });
