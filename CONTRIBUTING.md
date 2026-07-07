@@ -52,3 +52,36 @@ pnpm test
 
 ### Code of Conduct
 Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+## Git Workflow and Branching Strategy
+
+### Branch Naming Conventions
+- `feature/<issue-number>-<description>` — New features (e.g., `feature/45-android-setup`)
+- `bugfix/<issue-number>-<description>` — Bug fixes
+- `hotfix/<issue-number>-<description>` — Urgent production fixes
+- `docs/<description>` — Documentation only changes
+- `chore/<description>` — Maintenance, CI/CD, tooling
+
+### Commit Message Conventions
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` — A new feature
+- `fix:` — A bug fix
+- `docs:` — Documentation only
+- `chore:` — Maintenance, CI/CD
+- `refactor:` — Code change that neither fixes a bug nor adds a feature
+- `test:` — Adding or updating tests
+
+Format: `<type>: <description>`
+
+### Pull Request Process
+1. Create a feature branch from `main`
+2. Implement your changes with clear commit messages
+3. Update documentation and tests as needed
+4. Create a pull request against `main`
+5. Ensure CI checks pass before requesting review
+6. Squash merge on approval
+
+### Code Review Guidelines
+- All code requires at least one approval
+- Address all review comments before merging
+- Keep PRs focused on a single concern
