@@ -269,7 +269,11 @@ describe('UsersService login', () => {
         REFRESH_TOKEN_SECRET: 'test-refresh-secret',
       }),
       cache as unknown as Keyv,
-      { createSession: jest.fn().mockResolvedValue({ sessionId: 'test-session' }) } as any,
+      {
+        createSession: jest
+          .fn()
+          .mockResolvedValue({ sessionId: 'test-session' }),
+      } as any,
     );
   });
 
@@ -284,8 +288,8 @@ describe('UsersService login', () => {
       lockedUntil: null,
     };
 
-    (prisma.user.findFirst as jest.Mock).mockResolvedValue(mockUser);
-    (prisma.user.update as jest.Mock).mockResolvedValue({});
+    prisma.user.findFirst.mockResolvedValue(mockUser);
+    prisma.user.update.mockResolvedValue({});
     bcryptMock.compare.mockResolvedValueOnce(true as never);
 
     await service.login('test@example.com', 'password123');
@@ -392,7 +396,10 @@ describe('UsersService profile calculations', () => {
   function mockFindFirstData(data: ReturnType<typeof mockUserWithRelations>) {
     prisma.user.findFirst.mockImplementation((args: any) => {
       if (!args) return null;
-      if (args?.where?.deletedAt === null && args?.where?.walletAddress === 'UNKNOWN_WALLET') {
+      if (
+        args?.where?.deletedAt === null &&
+        args?.where?.walletAddress === 'UNKNOWN_WALLET'
+      ) {
         return null;
       }
       return applyIncludeFilter(data, args?.include);
@@ -407,8 +414,10 @@ describe('UsersService profile calculations', () => {
           return {
             ...mockUserWithRelations({ campaigns: [], donations: [] }),
             ...args.data,
-            campaigns: mockUserWithRelations({ campaigns: [], donations: [] }).campaigns,
-            donations: mockUserWithRelations({ campaigns: [], donations: [] }).donations,
+            campaigns: mockUserWithRelations({ campaigns: [], donations: [] })
+              .campaigns,
+            donations: mockUserWithRelations({ campaigns: [], donations: [] })
+              .donations,
           };
         }),
         findUnique: jest.fn(),
@@ -437,11 +446,7 @@ describe('UsersService profile calculations', () => {
             { raisedAmount: 500, status: 'ACTIVE' },
             { raisedAmount: 300, status: 'ACTIVE' },
           ],
-          donations: [
-            { amount: 100 },
-            { amount: 50 },
-            { amount: 25 },
-          ],
+          donations: [{ amount: 100 }, { amount: 50 }, { amount: 25 }],
         }),
       );
 
@@ -521,11 +526,13 @@ describe('UsersService profile calculations', () => {
     });
 
     it('throws NotFoundException when user is not found', async () => {
-      mockFindFirstData(mockUserWithRelations({ campaigns: [], donations: [] }));
+      mockFindFirstData(
+        mockUserWithRelations({ campaigns: [], donations: [] }),
+      );
 
-      await expect(
-        service.getMyProfile('UNKNOWN_WALLET'),
-      ).rejects.toThrow('User not found');
+      await expect(service.getMyProfile('UNKNOWN_WALLET')).rejects.toThrow(
+        'User not found',
+      );
     });
 
     it('queries with walletAddress and deletedAt:null filter', async () => {
@@ -616,7 +623,10 @@ describe('UsersService profile calculations', () => {
     });
 
     it('throws BadRequestException when new email is already taken', async () => {
-      const existingUser = mockUserWithRelations({ campaigns: [], donations: [] });
+      const existingUser = mockUserWithRelations({
+        campaigns: [],
+        donations: [],
+      });
       existingUser.email = 'current@example.com';
       prisma.user.findFirst
         .mockResolvedValueOnce(existingUser)
@@ -658,7 +668,10 @@ describe('UsersService profile calculations', () => {
     });
 
     it('does not check email uniqueness when email is unchanged', async () => {
-      const existingUser = mockUserWithRelations({ campaigns: [], donations: [] });
+      const existingUser = mockUserWithRelations({
+        campaigns: [],
+        donations: [],
+      });
       existingUser.email = 'same@example.com';
 
       prisma.user.findFirst
@@ -668,16 +681,18 @@ describe('UsersService profile calculations', () => {
         mockUserWithRelations({ campaigns: [], donations: [] }),
       );
 
-      await service.updateMyProfile(
-        'GBKXNRTZQVD6CNOQNRZVMJVQ4ZQ5KABCDEF',
-        { email: 'same@example.com' },
-      );
+      await service.updateMyProfile('GBKXNRTZQVD6CNOQNRZVMJVQ4ZQ5KABCDEF', {
+        email: 'same@example.com',
+      });
 
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
     });
 
     it('updates only provided fields preserving existing values', async () => {
-      const existingUser = mockUserWithRelations({ campaigns: [], donations: [] });
+      const existingUser = mockUserWithRelations({
+        campaigns: [],
+        donations: [],
+      });
       existingUser.displayName = 'Original Name';
       existingUser.name = 'Original Name';
 
@@ -691,10 +706,9 @@ describe('UsersService profile calculations', () => {
         donations: [],
       });
 
-      await service.updateMyProfile(
-        'GBKXNRTZQVD6CNOQNRZVMJVQ4ZQ5KABCDEF',
-        { name: 'New Name' },
-      );
+      await service.updateMyProfile('GBKXNRTZQVD6CNOQNRZVMJVQ4ZQ5KABCDEF', {
+        name: 'New Name',
+      });
 
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -789,11 +803,13 @@ describe('UsersService profile calculations', () => {
     });
 
     it('throws NotFoundException when user is not found', async () => {
-      mockFindFirstData(mockUserWithRelations({ campaigns: [], donations: [] }));
+      mockFindFirstData(
+        mockUserWithRelations({ campaigns: [], donations: [] }),
+      );
 
-      await expect(
-        service.getPublicProfile('UNKNOWN_WALLET'),
-      ).rejects.toThrow('not found');
+      await expect(service.getPublicProfile('UNKNOWN_WALLET')).rejects.toThrow(
+        'not found',
+      );
     });
 
     it('queries with campaigns include filtered to ACTIVE only', async () => {

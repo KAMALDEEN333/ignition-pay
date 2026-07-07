@@ -16,7 +16,9 @@ const TEST_WALLET_PUBLIC = TEST_KEYPAIR.publicKey();
 interface PartialVerifyDeps {
   prisma?: jest.Mocked<Pick<PrismaService, 'user' | '$transaction'>>;
   config?: ConfigService;
-  challengeService?: jest.Mocked<Pick<AuthChallengeService, 'consumeChallenge'>>;
+  challengeService?: jest.Mocked<
+    Pick<AuthChallengeService, 'consumeChallenge'>
+  >;
   sessionService?: jest.Mocked<Pick<SessionService, 'createSession'>>;
   tokenService?: jest.Mocked<Pick<AuthTokenService, 'issueTokenPair'>>;
 }
@@ -36,9 +38,11 @@ function makeController(overrides: PartialVerifyDeps = {}): {
   // Issue #130: upsert is now executed inside prisma.$transaction
   const prisma = {
     user: { upsert: upsertMock },
-    $transaction: jest.fn().mockImplementation((fn: (tx: any) => Promise<any>) =>
-      fn({ user: { upsert: upsertMock } }),
-    ),
+    $transaction: jest
+      .fn()
+      .mockImplementation((fn: (tx: any) => Promise<any>) =>
+        fn({ user: { upsert: upsertMock } }),
+      ),
   };
   const config = new ConfigService({
     ADMIN_WALLETS: '',
@@ -70,7 +74,8 @@ function makeController(overrides: PartialVerifyDeps = {}): {
   const controller = new AuthVerifyController(
     (overrides.prisma ?? prisma) as unknown as PrismaService,
     overrides.config ?? config,
-    (overrides.challengeService ?? challengeService) as unknown as AuthChallengeService,
+    (overrides.challengeService ??
+      challengeService) as unknown as AuthChallengeService,
     (overrides.sessionService ?? sessionService) as unknown as SessionService,
     (overrides.tokenService ?? tokenService) as unknown as AuthTokenService,
   );
@@ -80,9 +85,7 @@ function makeController(overrides: PartialVerifyDeps = {}): {
 
 function signChallenge(challenge: string): string {
   const keypair = Keypair.fromSecret(TEST_WALLET_SECRET);
-  return keypair
-    .sign(Buffer.from(challenge, 'utf8'))
-    .toString('base64');
+  return keypair.sign(Buffer.from(challenge, 'utf8')).toString('base64');
 }
 
 describe('AuthVerifyController', () => {
@@ -124,7 +127,8 @@ describe('AuthVerifyController', () => {
       const challenge = 'stellaraid:login:nonce:ts';
       const signedChallenge = signChallenge(challenge);
 
-      const { controller, prisma, sessionService, tokenService } = makeController();
+      const { controller, prisma, sessionService, tokenService } =
+        makeController();
       const result = await controller.verify({
         walletAddress: TEST_WALLET_PUBLIC,
         signedChallenge,
@@ -138,7 +142,9 @@ describe('AuthVerifyController', () => {
       expect(prisma.user.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { walletAddress: TEST_WALLET_PUBLIC },
-          create: expect.objectContaining({ walletAddress: TEST_WALLET_PUBLIC }),
+          create: expect.objectContaining({
+            walletAddress: TEST_WALLET_PUBLIC,
+          }),
         }),
       );
 

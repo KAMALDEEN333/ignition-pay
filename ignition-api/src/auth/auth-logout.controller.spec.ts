@@ -10,7 +10,9 @@ describe('AuthLogoutController', () => {
 
   beforeEach(() => {
     sessionService = { revokeSession: jest.fn().mockResolvedValue(undefined) };
-    tokenService = { revokeRefreshToken: jest.fn().mockResolvedValue(undefined) };
+    tokenService = {
+      revokeRefreshToken: jest.fn().mockResolvedValue(undefined),
+    };
 
     controller = new AuthLogoutController(
       sessionService as unknown as SessionService,

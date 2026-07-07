@@ -27,13 +27,13 @@ export class SessionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context
-      .switchToHttp()
-      .getRequest<AuthenticatedRequest>();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     const authHeader = request.headers['authorization'];
     if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
 
     const token = authHeader.slice(7);
@@ -41,8 +41,11 @@ export class SessionGuard implements CanActivate {
 
     try {
       payload = this.jwt.verify(token, {
-        secret: this.config.get<string>('JWT_SECRET', 'stellaraid-default-secret'),
-      }) as Record<string, unknown>;
+        secret: this.config.get<string>(
+          'JWT_SECRET',
+          'stellaraid-default-secret',
+        ),
+      });
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }

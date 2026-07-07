@@ -24,7 +24,9 @@
     "backup:database": "node scripts/backup-database.mjs",
     "backup:verify": "node scripts/verify-database-backup.mjs",
     "backup:restore": "node scripts/restore-database.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\""
   },
   "dependencies": {
     "@bull-board/api": "^6.10.4",
@@ -51,6 +53,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "ioredis": "^5.11.0",
+    "keyv": "^5.6.0",
     "nest-winston": "^1.10.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

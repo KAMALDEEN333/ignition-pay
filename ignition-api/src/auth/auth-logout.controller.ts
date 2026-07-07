@@ -47,7 +47,9 @@ export class AuthLogoutController {
   @UseGuards(SessionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Logout and revoke the current session + refresh token' })
+  @ApiOperation({
+    summary: 'Logout and revoke the current session + refresh token',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Session and refresh token successfully revoked',

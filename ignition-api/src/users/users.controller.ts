@@ -11,7 +11,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -172,7 +177,10 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() updateDto: UpdateUserDto,
   ): Promise<UserProfileDto> {
-    return this.usersService.updateMyProfile(resolveWalletAddress(req), updateDto);
+    return this.usersService.updateMyProfile(
+      resolveWalletAddress(req),
+      updateDto,
+    );
   }
 
   /**
@@ -195,7 +203,10 @@ export class UsersController {
     @Request() req: AuthenticatedRequest,
     @Body() updateDto: UpdateUserDto,
   ): Promise<UserProfileDto> {
-    return this.usersService.updateMyProfile(resolveWalletAddress(req), updateDto);
+    return this.usersService.updateMyProfile(
+      resolveWalletAddress(req),
+      updateDto,
+    );
   }
 
   /**
@@ -246,7 +257,8 @@ export class AdminUsersController {
     @Body() updateDto: UpdateUserRoleDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<{ success: boolean; message: string }> {
-    const adminId = req.user.sub || req.user.userId || req.user.walletAddress;
+    const adminId =
+      req.user.sub || req.user.userId || req.user.walletAddress || '';
     return this.usersService.updateUserRole(userId, updateDto.role, adminId);
   }
 }

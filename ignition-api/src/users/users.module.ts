@@ -28,7 +28,14 @@ import { PermissionsGuard } from '../auth/permissions/permissions.guard';
     CacheModule,
   ],
   controllers: [UsersController, AdminUsersController],
-  providers: [UsersService, JwtAuthGuard, AdminGuard, RolesGuard, PermissionsService, PermissionsGuard],
+  providers: [
+    UsersService,
+    JwtAuthGuard,
+    AdminGuard,
+    RolesGuard,
+    PermissionsService,
+    PermissionsGuard,
+  ],
   exports: [UsersService],
 })
 export class UsersModule {}

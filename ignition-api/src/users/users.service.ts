@@ -123,7 +123,11 @@ export class UsersService {
 
     if (updateDto.email && updateDto.email !== user.email) {
       const existing = await this.prisma.user.findUnique({
-        where: { email: updateDto.email, deletedAt: null, NOT: { id: user.id } },
+        where: {
+          email: updateDto.email,
+          deletedAt: null,
+          NOT: { id: user.id },
+        },
       });
       if (existing) {
         throw new BadRequestException('Email already in use');
@@ -198,9 +202,7 @@ export class UsersService {
   /**
    * Get public profile for a user by wallet address
    */
-  async getPublicProfile(
-    walletAddress: string,
-  ): Promise<PublicUserProfileDto> {
+  async getPublicProfile(walletAddress: string): Promise<PublicUserProfileDto> {
     const user = await this.prisma.user.findFirst({
       where: { walletAddress, deletedAt: null },
       include: {
@@ -334,7 +336,10 @@ export class UsersService {
       role: user.role,
     });
 
-    const accessTtlSeconds = this.config.get<number>('SESSION_ACCESS_TTL_SECONDS', 900);
+    const accessTtlSeconds = this.config.get<number>(
+      'SESSION_ACCESS_TTL_SECONDS',
+      900,
+    );
 
     const accessToken = this.jwt.sign(
       {
@@ -345,12 +350,18 @@ export class UsersService {
         sid: session.sessionId,
       },
       {
-        secret: this.config.get<string>('JWT_SECRET', 'stellaraid-default-secret'),
+        secret: this.config.get<string>(
+          'JWT_SECRET',
+          'stellaraid-default-secret',
+        ),
         expiresIn: `${accessTtlSeconds}s`,
       },
     );
 
-    const sessionTtlSeconds = this.config.get<number>('SESSION_TTL_SECONDS', 604800);
+    const sessionTtlSeconds = this.config.get<number>(
+      'SESSION_TTL_SECONDS',
+      604800,
+    );
 
     const refreshToken = this.jwt.sign(
       { sub: user.id, sid: session.sessionId },
@@ -732,10 +743,7 @@ export class UsersService {
   private async verifyAdminRole(adminId: string): Promise<void> {
     const admin = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { id: adminId },
-          { walletAddress: adminId },
-        ],
+        OR: [{ id: adminId }, { walletAddress: adminId }],
         deletedAt: null,
       },
     });
