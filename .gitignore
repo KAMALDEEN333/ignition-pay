@@ -31,6 +31,10 @@ ios/.symlinks/
 Flutter/
 .metadata
 
+.example
+/react-demo     
+node_modules
+
 # IDE
 .vscode/
 .DS_Store
